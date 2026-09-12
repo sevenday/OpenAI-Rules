@@ -1,9 +1,10 @@
-name: Check OpenAI network rules
+name: Check AI network rules
 
 on:
   schedule:
     - cron: "20 0 * * *"
   workflow_dispatch:
+  pull_request:
 
 permissions:
   contents: write
@@ -28,26 +29,37 @@ jobs:
       - name: Run tests
         run: pytest -q
 
-      - name: Fetch official allowlist and regenerate rules
+      - name: Fetch OpenAI allowlist and regenerate rules
+        if: github.event_name != 'pull_request'
         run: python scripts/update.py
 
+      - name: Fetch Claude network requirements and regenerate rules
+        if: github.event_name != 'pull_request'
+        run: python scripts/update_claude.py
+
       - name: Create or update pull request
+        if: github.event_name != 'pull_request'
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: automation/openai-network-rules
+          branch: automation/ai-network-rules
           delete-branch: true
-          commit-message: "chore: update OpenAI network rules"
-          title: "chore: update OpenAI network rules"
+          commit-message: "chore: update AI network rules"
+          title: "chore: update AI network rules"
           body: |
-            OpenAI's official network allowlist produced a change.
+            Official OpenAI and/or Anthropic network documentation produced a rule-source change.
 
-            This PR was generated automatically from:
-            https://help.openai.com/en/articles/9247338
+            Sources checked automatically:
+            - https://help.openai.com/en/articles/9247338
+            - https://code.claude.com/docs/en/corporate-proxy
 
             Please review additions/removals before merging. The workflow never auto-merges this PR.
           add-paths: |
             data/official.txt
+            data/claude/official.txt
             rules/OpenAI.list
             rules/OpenAI.yaml
             rules/OpenAI-Surge.list
+            rules/Claude.list
+            rules/Claude.yaml
+            rules/Claude-Surge.list
