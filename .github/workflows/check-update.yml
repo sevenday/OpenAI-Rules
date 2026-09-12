@@ -1,0 +1,53 @@
+name: Check OpenAI network rules
+
+on:
+  schedule:
+    - cron: "20 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest -q
+
+      - name: Fetch official allowlist and regenerate rules
+        run: python scripts/update.py
+
+      - name: Create or update pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/openai-network-rules
+          delete-branch: true
+          commit-message: "chore: update OpenAI network rules"
+          title: "chore: update OpenAI network rules"
+          body: |
+            OpenAI's official network allowlist produced a change.
+
+            This PR was generated automatically from:
+            https://help.openai.com/en/articles/9247338
+
+            Please review additions/removals before merging. The workflow never auto-merges this PR.
+          add-paths: |
+            data/official.txt
+            rules/OpenAI.list
+            rules/OpenAI.yaml
+            rules/OpenAI-Surge.list
