@@ -1,16 +1,16 @@
 # Sources and rule policy
 
-## 1. Primary source: OpenAI
+## 1. OpenAI primary source
 
 Official network guidance:
 
 - https://help.openai.com/en/articles/9247338
 
-The updater reads only the **OpenAI/ChatGPT domains to allowlist** section. It does not turn unrelated text, WebSocket URLs, firewall ports, Voice IP ranges, or troubleshooting examples into domain rules.
+The OpenAI updater reads only the **OpenAI/ChatGPT domains to allowlist** section. It does not turn unrelated text, WebSocket URLs, firewall ports, Voice IP ranges, or troubleshooting examples into domain rules.
 
-The checked-in official snapshot is stored in `data/official.txt` so every automatic change remains reviewable in Git history and in the generated Pull Request.
+The checked-in official snapshot is stored in `data/official.txt` so every automatic change remains reviewable in Git history and in generated Pull Requests.
 
-## 2. Supplemental reference
+### OpenAI supplemental reference
 
 Historical reference:
 
@@ -18,17 +18,7 @@ Historical reference:
 
 That upstream file reports `UPDATED: 2025-06-06 09:20:00`. This repository does **not** copy it wholesale. Only relatively specific historical OpenAI/ChatGPT dependencies are kept in `data/supplemental.txt`.
 
-Currently curated supplemental groups include:
-
-- OpenAI-specific Arkose Labs verification hosts
-- ChatGPT/LiveKit hosts
-- Statsig hosts historically used by the service
-- OpenAI-specific Azure CDN / Blob / Imgix hosts
-- Specific Cloudflare Insights / Datadog hosts present in the historical rules
-
-## 3. Intentionally excluded broad legacy rules
-
-The following blackmatrix7-style rules are intentionally not included by default because they can capture substantial traffic unrelated to OpenAI:
+The repository intentionally excludes broad legacy captures such as:
 
 ```text
 DOMAIN-KEYWORD,openai
@@ -40,40 +30,78 @@ DOMAIN-SUFFIX,stripe.com
 DOMAIN-SUFFIX,sentry.io
 ```
 
-The repository also avoids broad shared third-party suffixes unless there is a strong OpenAI-specific reason to include them, including historical entries such as:
+It also avoids broad shared third-party suffixes such as `algolia.net`, `identrust.com`, `launchdarkly.com`, `observeit.net` and `segment.io` unless there is a strong OpenAI-specific reason to include them.
+
+## 2. Anthropic / Claude primary source
+
+Official Claude Code enterprise network guidance:
+
+- https://code.claude.com/docs/en/corporate-proxy
+
+The Claude updater parses the **Network access requirements** table and stores every portable `DOMAIN` / `DOMAIN-SUFFIX` entry in `data/claude/official.txt`.
+
+As of the initial Claude integration, that official table includes both Claude-owned hosts and shared third-party infrastructure, including examples such as:
+
+- `api.anthropic.com`
+- `claude.ai`
+- `claude.com`
+- `platform.claude.com`
+- `mcp-proxy.anthropic.com`
+- `downloads.claude.ai`
+- `bridge.claudeusercontent.com`
+- `*.frame.claudeusercontent.com`
+- `raw.githubusercontent.com`
+- `registry.npmjs.org`
+- `storage.googleapis.com`
+- Datadog intake hosts
+- `formulae.brew.sh`
+- `code.claude.com`
+
+The official table also contains the optional Gerrit pattern `*-review.googlesource.com`. That pattern is intentionally not converted into the maintained client rule files because it is not portable across the repository's minimal `DOMAIN` / `DOMAIN-SUFFIX` output model and only applies to a specific Gerrit checkout scenario.
+
+### Claude default routing policy
+
+The default generated Claude rule sets deliberately route only Anthropic / Claude-owned domain roots:
 
 ```text
-DOMAIN-SUFFIX,algolia.net
-DOMAIN-SUFFIX,identrust.com
-DOMAIN-SUFFIX,launchdarkly.com
-DOMAIN-SUFFIX,observeit.net
-DOMAIN-SUFFIX,segment.io
+DOMAIN-SUFFIX,anthropic.com
+DOMAIN-SUFFIX,claude.ai
+DOMAIN-SUFFIX,claude.com
+DOMAIN-SUFFIX,claudeusercontent.com
 ```
 
-`DOMAIN-SUFFIX,ai.com` is also omitted because the current OpenAI official allowlist does not require it and the domain-wide match is not needed for current ChatGPT/Codex routing.
+This keeps Claude routing narrow. Shared official dependencies such as GitHub Raw, npm, Google Storage, Datadog and Homebrew are preserved in the official snapshot for auditing and change detection, but are not added to the Claude-specific output by default because doing so could proxy substantial unrelated traffic.
 
-If connection logs later demonstrate that an excluded dependency is still required, it should be added as narrowly as possible and documented here.
+If a user's network requires those shared services to use a proxy, they should generally be handled by the user's broader GitHub / Google / npm rules. Narrow exceptions can also be added to `data/claude/supplemental.txt` after review.
 
-## 4. Output minimization
+## 3. Output minimization
 
-`data/official.txt` preserves the normalized semantics of the official list. Generated client files are allowed to remove redundant exact-host rules when a broader `DOMAIN-SUFFIX` rule already covers the same host.
+Official snapshots preserve normalized source semantics. Generated client files are allowed to remove redundant exact-host or narrower suffix rules when a broader `DOMAIN-SUFFIX` rule already covers them.
 
-For example, when both of these exist in source data:
+For example:
 
 ```text
 DOMAIN-SUFFIX,openai.com
 DOMAIN,chat.openai.com
 ```
 
-the generated rule-set only needs the suffix rule. This keeps subscriptions smaller while preserving the official source snapshot for auditing.
+only needs the suffix rule in a generated subscription. The same applies to Claude, where `DOMAIN-SUFFIX,claude.com` covers `platform.claude.com` and `code.claude.com`.
 
-## 5. Automation safety
+## 4. Automation safety
 
-Before writing any live update, the updater requires:
+Before writing any live OpenAI update, the updater requires:
 
 - the allowlist heading to be found;
 - at least 20 normalized official rules;
 - valid `DOMAIN` / `DOMAIN-SUFFIX` syntax;
 - the core `openai.com` and `chatgpt.com` suffix rules.
 
-The complete new official snapshot and all three outputs are built before any file is replaced. The final replacement uses same-directory temporary files and `os.replace`, so a fetch/parse/validation/render failure does not partially overwrite the repository's maintained rule files.
+Before writing any live Claude update, the updater requires:
+
+- the `Network access requirements` heading and table to be found;
+- at least 12 normalized official entries;
+- valid `DOMAIN` / `DOMAIN-SUFFIX` syntax;
+- required Claude core hosts such as `api.anthropic.com`, `claude.ai`, `claude.com`, `platform.claude.com`, `downloads.claude.ai` and `bridge.claudeusercontent.com`;
+- any newly introduced non-portable wildcard pattern to fail loudly instead of being silently ignored.
+
+Both updaters build complete new contents before replacement and use same-directory temporary files plus `os.replace`, so a fetch/parse/validation/render failure does not partially overwrite maintained rule files.
