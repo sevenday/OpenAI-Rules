@@ -1,0 +1,6 @@
+# Curated routing rules for Anthropic/Claude-owned domains.
+# These suffixes deliberately avoid broad shared third-party infrastructure.
+DOMAIN-SUFFIX,anthropic.com
+DOMAIN-SUFFIX,claude.ai
+DOMAIN-SUFFIX,claude.com
+DOMAIN-SUFFIX,claudeusercontent.com
