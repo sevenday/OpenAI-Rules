@@ -46,7 +46,6 @@ jobs:
             https://help.openai.com/en/articles/9247338
 
             Please review additions/removals before merging. The workflow never auto-merges this PR.
-          labels: automated-update
           add-paths: |
             data/official.txt
             rules/OpenAI.list
