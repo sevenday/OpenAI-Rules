@@ -4,6 +4,7 @@ on:
   schedule:
     - cron: "20 0 * * *"
   workflow_dispatch:
+  pull_request:
 
 permissions:
   contents: write
@@ -29,12 +30,15 @@ jobs:
         run: pytest -q
 
       - name: Fetch OpenAI allowlist and regenerate rules
+        if: github.event_name != 'pull_request'
         run: python scripts/update.py
 
       - name: Fetch Claude network requirements and regenerate rules
+        if: github.event_name != 'pull_request'
         run: python scripts/update_claude.py
 
       - name: Create or update pull request
+        if: github.event_name != 'pull_request'
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
