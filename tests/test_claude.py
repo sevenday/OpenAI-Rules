@@ -141,3 +141,14 @@ def test_render_claude_official_snapshot_is_deterministic():
         """
     )
     assert update.render_claude_official_snapshot(rules) == expected
+
+
+def test_checked_in_claude_generated_files_match_sources():
+    repo_root = Path(__file__).parents[1]
+    official = update.load_rules(repo_root / "data" / "claude" / "official.txt")
+    update.validate_claude_official_rules(official)
+    contents = update.build_claude_update_contents(
+        repo_root, official, include_official=False
+    )
+    for path, expected in contents.items():
+        assert path.read_text(encoding="utf-8") == expected, f"stale generated file: {path}"
