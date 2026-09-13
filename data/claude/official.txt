@@ -2,8 +2,8 @@
 # Section: Network access requirements
 DOMAIN-SUFFIX,frame.claudeusercontent.com
 DOMAIN,api.anthropic.com
-DOMAIN,browser-intake-us5-datadoghq.com
 DOMAIN,bridge.claudeusercontent.com
+DOMAIN,browser-intake-us5-datadoghq.com
 DOMAIN,claude.ai
 DOMAIN,claude.com
 DOMAIN,code.claude.com

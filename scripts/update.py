@@ -100,17 +100,17 @@ def minimize_rules(rules: list[str]) -> list[str]:
         for rule in unique
         if rule.startswith("DOMAIN-SUFFIX,")
     }
-    return [
-        rule
-        for rule in unique
-        if not (
-            rule.startswith("DOMAIN,")
-            and any(
-                _covered(rule.split(",", 1)[1], suffix)
-                for suffix in suffixes
-            )
-        )
-    ]
+    result: list[str] = []
+    for rule in unique:
+        kind, domain = rule.split(",", 1)
+        if kind == "DOMAIN" and any(_covered(domain, suffix) for suffix in suffixes):
+            continue
+        if kind == "DOMAIN-SUFFIX" and any(
+            other != domain and _covered(domain, other) for other in suffixes
+        ):
+            continue
+        result.append(rule)
+    return result
 
 
 def render_clash_list(rules: list[str]) -> str:
