@@ -1,8 +1,7 @@
-# Curated compatibility rules based on historical OpenAI dependencies.
+# Curated compatibility rules; official requirements stay in official.txt.
 # Reference: https://github.com/blackmatrix7/ios_rule_script/blob/master/rule/Surge/OpenAI/OpenAI.list
 # Broad shared third-party suffixes, DOMAIN-KEYWORD, IP-ASN and historical fixed IPs are intentionally excluded.
 DOMAIN,browser-intake-datadoghq.com
-DOMAIN,chat.openai.com.cdn.cloudflare.net
 DOMAIN,openai-api.arkoselabs.com
 DOMAIN,openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net
 DOMAIN,openaicomproductionae4b.blob.core.windows.net
@@ -17,3 +16,10 @@ DOMAIN-SUFFIX,host.livekit.cloud
 DOMAIN-SUFFIX,openaiapi-site.azureedge.net
 DOMAIN-SUFFIX,openaicom.imgix.net
 DOMAIN-SUFFIX,turn.livekit.cloud
+
+# Reviewed 2026-09-13: short-link redirect and narrowly scoped community CDN entries.
+# Evidence and rejected candidates: docs/rule-comparison-2026-09-13.md
+# Community source: https://github.com/v2fly/domain-list-community/blob/5d939545c84e2a534f8e85ba6ffb2b51fa18fb76/data/openai
+DOMAIN-SUFFIX,chat.com
+DOMAIN-SUFFIX,openai.com.cdn.cloudflare.net
+DOMAIN,openaiassets.blob.core.windows.net

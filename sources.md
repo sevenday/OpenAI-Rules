@@ -61,18 +61,22 @@ The official table also contains the optional Gerrit pattern `*-review.googlesou
 
 ### Claude default routing policy
 
-The default generated Claude rule sets deliberately route only Anthropic / Claude-owned domain roots:
+The default generated Claude rule sets route core domain roots and narrowly scoped, manually reviewed compatibility dependencies:
 
 ```text
 DOMAIN-SUFFIX,anthropic.com
 DOMAIN-SUFFIX,clau.de
 DOMAIN-SUFFIX,claude.ai
 DOMAIN-SUFFIX,claude.com
+DOMAIN-SUFFIX,claudemcpclient.com
 DOMAIN-SUFFIX,claudemcpcontent.com
 DOMAIN-SUFFIX,claudeusercontent.com
+DOMAIN,servd-anthropic-website.b-cdn.net
 ```
 
 `clau.de` is an official Claude short-link domain. `claudemcpcontent.com` is used by Claude-hosted MCP Apps content frames; see Anthropic's MCP Apps cross-compatibility documentation at https://claude.com/docs/connectors/building/mcp-apps/cross-compatibility. These are manually curated supplemental roots because they are useful for Claude routing even when they are not present in the Claude Code corporate-proxy table.
+
+`claudemcpclient.com` and the exact Bunny CDN tenant host are community compatibility entries reviewed on 2026-09-13, not claims of official allowlist status. v2fly, MetaCubeX and VPSDance include them; those repositories share upstream data and are not three independent runtime observations. See the pinned sources and limitations in the [comparison record](docs/rule-comparison-2026-09-13.md).
 
 This keeps Claude routing narrow. Shared official dependencies such as GitHub Raw, npm, Google Storage, Datadog and Homebrew are preserved in the official snapshot for auditing and change detection, but are not added to the Claude-specific output by default because doing so could proxy substantial unrelated traffic.
 
@@ -109,3 +113,9 @@ Before writing any live Claude update, the updater requires:
 - any newly introduced non-portable wildcard pattern to fail loudly instead of being silently ignored.
 
 Both updaters build complete new contents before replacement and use same-directory temporary files plus `os.replace`, so a fetch/parse/validation/render failure does not partially overwrite maintained rule files.
+
+## 5. Community comparison and maintenance
+
+The [2026-09-13 comparison](docs/rule-comparison-2026-09-13.md) records pinned revisions of VPSDance, v2fly, MetaCubeX and blackmatrix7, accepted entries, deferred candidates and rejected broad matches. OpenAI additions are `chat.com`, the exact Azure Blob host `openaiassets.blob.core.windows.net`, and the scoped `openai.com.cdn.cloudflare.net` suffix (replacing its narrower legacy chat host).
+
+Community sources are discovery inputs, never automatically unioned into subscriptions. Curated compatibility entries stay in `data/supplemental.txt` and `data/claude/supplemental.txt`; official snapshots preserve the official source semantics. Periodic review should check both additions and whether older dependencies are still needed. Shared upstream agreement alone is not proof of current domain ownership, connectivity improvement, or independent verification.

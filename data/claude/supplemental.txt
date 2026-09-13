@@ -1,8 +1,14 @@
-# Curated routing rules for Anthropic/Claude-owned domains.
-# These suffixes deliberately avoid broad shared third-party infrastructure.
+# Curated routing roots and narrowly scoped compatibility dependencies.
+# These rules deliberately avoid broad shared third-party infrastructure.
 DOMAIN-SUFFIX,anthropic.com
 DOMAIN-SUFFIX,clau.de
 DOMAIN-SUFFIX,claude.ai
 DOMAIN-SUFFIX,claude.com
 DOMAIN-SUFFIX,claudemcpcontent.com
 DOMAIN-SUFFIX,claudeusercontent.com
+
+# Reviewed 2026-09-13: community compatibility entries, not official allowlist entries.
+# Evidence and rejected candidates: docs/rule-comparison-2026-09-13.md
+# Source: https://github.com/v2fly/domain-list-community/blob/5d939545c84e2a534f8e85ba6ffb2b51fa18fb76/data/anthropic
+DOMAIN-SUFFIX,claudemcpclient.com
+DOMAIN,servd-anthropic-website.b-cdn.net

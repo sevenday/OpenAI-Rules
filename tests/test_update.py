@@ -85,6 +85,33 @@ def test_minimize_does_not_remove_unrelated_exact_domain():
     ]
 
 
+def test_minimize_removes_nested_suffixes_without_mutating_source():
+    rules = [
+        "DOMAIN-SUFFIX,openai.com",
+        "DOMAIN-SUFFIX,auth.openai.com",
+        "DOMAIN-SUFFIX,setup.auth.openai.com",
+        "DOMAIN,setup.auth.openai.com",
+    ]
+    original = rules.copy()
+    assert update.minimize_rules(rules) == ["DOMAIN-SUFFIX,openai.com"]
+    assert rules == original
+
+
+def test_minimize_preserves_domain_label_boundaries():
+    rules = [
+        "DOMAIN-SUFFIX,openai.com",
+        "DOMAIN-SUFFIX,notopenai.com",
+        "DOMAIN-SUFFIX,openai.com.cdn.cloudflare.net",
+        "DOMAIN,openai.com.example.net",
+    ]
+    assert update.minimize_rules(rules) == [
+        "DOMAIN-SUFFIX,notopenai.com",
+        "DOMAIN-SUFFIX,openai.com",
+        "DOMAIN-SUFFIX,openai.com.cdn.cloudflare.net",
+        "DOMAIN,openai.com.example.net",
+    ]
+
+
 def test_renderers():
     rules = ["DOMAIN-SUFFIX,openai.com", "DOMAIN,challenges.cloudflare.com"]
     plain = "DOMAIN-SUFFIX,openai.com\nDOMAIN,challenges.cloudflare.com\n"
