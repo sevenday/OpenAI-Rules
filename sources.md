@@ -65,10 +65,14 @@ The default generated Claude rule sets deliberately route only Anthropic / Claud
 
 ```text
 DOMAIN-SUFFIX,anthropic.com
+DOMAIN-SUFFIX,clau.de
 DOMAIN-SUFFIX,claude.ai
 DOMAIN-SUFFIX,claude.com
+DOMAIN-SUFFIX,claudemcpcontent.com
 DOMAIN-SUFFIX,claudeusercontent.com
 ```
+
+`clau.de` is an official Claude short-link domain. `claudemcpcontent.com` is used by Claude-hosted MCP Apps content frames; see Anthropic's MCP Apps cross-compatibility documentation at https://claude.com/docs/connectors/building/mcp-apps/cross-compatibility. These are manually curated supplemental roots because they are useful for Claude routing even when they are not present in the Claude Code corporate-proxy table.
 
 This keeps Claude routing narrow. Shared official dependencies such as GitHub Raw, npm, Google Storage, Datadog and Homebrew are preserved in the official snapshot for auditing and change detection, but are not added to the Claude-specific output by default because doing so could proxy substantial unrelated traffic.
 
