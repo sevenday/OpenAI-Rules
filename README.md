@@ -84,9 +84,11 @@ RULE-SET,https://raw.githubusercontent.com/sevenday/OpenAI-Rules/main/rules/Clau
 RULE-SET,https://raw.githubusercontent.com/sevenday/OpenAI-Rules/main/rules/MapleStory-Surge.list,Proxy
 ```
 
+MapleStory 的 Surge 版本按 **iOS 使用场景**维护为纯域名规则，不包含 `PROCESS-NAME`。Surge iOS 无法使用 Windows/macOS 进程名识别远端电脑上的游戏进程；需要进程分流时请使用 Clash/Mihomo 版本。
+
 ## MapleStory GMS 规则策略
 
-MapleStory 规则优先使用游戏和启动器进程匹配，并以 Nexon 域名作为补充：
+MapleStory 的 Clash/Mihomo 规则优先使用游戏和启动器进程匹配，并以 Nexon 域名作为补充：
 
 ```text
 PROCESS-NAME,MapleStory.exe
@@ -98,7 +100,14 @@ DOMAIN-SUFFIX,nexon.com
 DOMAIN-SUFFIX,nexon.net
 ```
 
-`nexon.com` 和 `nexon.net` 的后缀规则同时覆盖 MapleStory 官网、Nexon 登录、支持站、`download2.nexon.net`、`nxcache.nexon.net` 等 Nexon 子域名，因此不重复维护大量子域名。游戏服务器若直接连接 IP，则主要依赖 `MapleStory` 进程规则完成分流。
+Surge iOS 版本只保留：
+
+```text
+DOMAIN-SUFFIX,nexon.com
+DOMAIN-SUFFIX,nexon.net
+```
+
+`nexon.com` 和 `nexon.net` 的后缀规则同时覆盖 MapleStory 官网、Nexon 登录、支持站、`download2.nexon.net`、`nxcache.nexon.net` 等 Nexon 子域名，因此不重复维护大量子域名。游戏服务器若直接连接 IP，则 Clash/Mihomo 主要依赖 `MapleStory` 进程规则完成分流；Surge iOS 无法通过进程名补足这类直接 IP 连接。
 
 Steam 版不默认加入 `steam.exe` 进程规则，避免把整个 Steam 商店、好友和游戏下载流量都送入 MapleStory 策略组。Windows 以 `MapleStory.exe` 和 `nexon_launcher.exe` 为主要匹配；无扩展名的进程条目用于兼容 macOS/不同客户端显示名称。
 
