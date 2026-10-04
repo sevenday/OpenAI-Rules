@@ -1,10 +1,10 @@
 # OpenAI-Rules
 
-面向 **OpenAI / ChatGPT / Codex / Claude** 的网络规则集，提供 Clash Party、Mihomo/Clash 和 Surge 三种订阅格式。
+面向 **OpenAI / ChatGPT / Codex / Claude / MapleStory GMS** 的网络规则集，提供 Clash Party、Mihomo/Clash 和 Surge 三种订阅格式。
 
-仓库同时维护 OpenAI 与 Anthropic 官方网络要求；每天自动检查官方文档，发现变化时只创建 Pull Request，**不会自动合并到 `main`**。
+仓库同时维护 OpenAI 与 Anthropic 官方网络要求；每天自动检查官方文档，发现变化时只创建 Pull Request，**不会自动合并到 `main`**。MapleStory 规则目前为人工维护。
 
-> 仓库名暂时保留 `OpenAI-Rules`，这样已经在用的 OpenAI 订阅地址不用改；Claude 规则直接放在同一仓库中。
+> 仓库名暂时保留 `OpenAI-Rules`，这样已经在用的 OpenAI 订阅地址不用改；Claude 和 MapleStory 规则直接放在同一仓库中。
 
 ## 订阅地址
 
@@ -16,6 +16,9 @@
 | Claude | Clash Party / text rule-set | `https://raw.githubusercontent.com/sevenday/OpenAI-Rules/main/rules/Claude.list` |
 | Claude | Mihomo / Clash classical rule-provider | `https://raw.githubusercontent.com/sevenday/OpenAI-Rules/main/rules/Claude.yaml` |
 | Claude | Surge RULE-SET | `https://raw.githubusercontent.com/sevenday/OpenAI-Rules/main/rules/Claude-Surge.list` |
+| MapleStory GMS | Clash Party / text rule-set | `https://raw.githubusercontent.com/sevenday/OpenAI-Rules/main/rules/MapleStory.list` |
+| MapleStory GMS | Mihomo / Clash classical rule-provider | `https://raw.githubusercontent.com/sevenday/OpenAI-Rules/main/rules/MapleStory.yaml` |
+| MapleStory GMS | Surge RULE-SET | `https://raw.githubusercontent.com/sevenday/OpenAI-Rules/main/rules/MapleStory-Surge.list` |
 
 ## Clash Party / Mihomo
 
@@ -51,9 +54,25 @@ rules:
   - RULE-SET,Claude,PROXY
 ```
 
+MapleStory GMS：
+
+```yaml
+rule-providers:
+  MapleStory:
+    type: http
+    behavior: classical
+    format: yaml
+    url: https://raw.githubusercontent.com/sevenday/OpenAI-Rules/main/rules/MapleStory.yaml
+    path: ./ruleset/maplestory-sevenday.yaml
+    interval: 86400
+
+rules:
+  - RULE-SET,MapleStory,PROXY
+```
+
 请把 `PROXY` 换成你自己的策略组名称。
 
-如果两个服务需要不同出口，可分别使用 `OpenAI-Proxy` 和 `Claude-Proxy` 策略组。同一服务的登录、API 和内容域名应使用一致的出口。把这两条 `RULE-SET` 放在会提前命中的通用代理规则、直连规则和最终 `MATCH` 之前。
+如果不同服务需要不同出口，可分别使用独立策略组。同一服务的登录、API、内容或游戏连接应使用一致的出口。把对应 `RULE-SET` 放在会提前命中的通用代理规则、直连规则和最终 `MATCH` 之前。
 
 使用 `.list` 作为 Mihomo rule-provider 时，设置 `behavior: classical`、`format: text`；使用 `.yaml` 时设置 `behavior: classical`、`format: yaml`。这些文件是规则订阅，不是包含节点的完整代理配置。
 
@@ -62,7 +81,26 @@ rules:
 ```ini
 RULE-SET,https://raw.githubusercontent.com/sevenday/OpenAI-Rules/main/rules/OpenAI-Surge.list,Proxy
 RULE-SET,https://raw.githubusercontent.com/sevenday/OpenAI-Rules/main/rules/Claude-Surge.list,Proxy
+RULE-SET,https://raw.githubusercontent.com/sevenday/OpenAI-Rules/main/rules/MapleStory-Surge.list,Proxy
 ```
+
+## MapleStory GMS 规则策略
+
+MapleStory 规则优先使用游戏和启动器进程匹配，并以 Nexon 域名作为补充：
+
+```text
+PROCESS-NAME,MapleStory.exe
+PROCESS-NAME,nexon_launcher.exe
+PROCESS-NAME,MapleStory
+PROCESS-NAME,MapleStory Launcher
+PROCESS-NAME,Nexon Launcher
+DOMAIN-SUFFIX,nexon.com
+DOMAIN-SUFFIX,nexon.net
+```
+
+`nexon.com` 和 `nexon.net` 的后缀规则同时覆盖 MapleStory 官网、Nexon 登录、支持站、`download2.nexon.net`、`nxcache.nexon.net` 等 Nexon 子域名，因此不重复维护大量子域名。游戏服务器若直接连接 IP，则主要依赖 `MapleStory` 进程规则完成分流。
+
+Steam 版不默认加入 `steam.exe` 进程规则，避免把整个 Steam 商店、好友和游戏下载流量都送入 MapleStory 策略组。Windows 以 `MapleStory.exe` 和 `nexon_launcher.exe` 为主要匹配；无扩展名的进程条目用于兼容 macOS/不同客户端显示名称。
 
 ## Claude 默认规则的覆盖范围
 
@@ -166,7 +204,10 @@ rules/
 ├── OpenAI-Surge.list
 ├── Claude.list
 ├── Claude.yaml
-└── Claude-Surge.list
+├── Claude-Surge.list
+├── MapleStory.list
+├── MapleStory.yaml
+└── MapleStory-Surge.list
 scripts/
 ├── update.py
 └── update_claude.py
@@ -182,4 +223,4 @@ tests/
 
 ## 说明
 
-本项目不是 OpenAI 或 Anthropic 官方项目。规则用于网络路由和兼容性配置，请根据自己的网络环境和当地要求使用。
+本项目不是 OpenAI、Anthropic 或 Nexon 官方项目。规则用于网络路由和兼容性配置，请根据自己的网络环境和当地要求使用。
