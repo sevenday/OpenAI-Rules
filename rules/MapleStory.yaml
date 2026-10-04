@@ -1,5 +1,8 @@
 payload:
   - PROCESS-NAME,MapleStory.exe
   - PROCESS-NAME,nexon_launcher.exe
+  - PROCESS-NAME,MapleStory
+  - PROCESS-NAME,MapleStory Launcher
+  - PROCESS-NAME,Nexon Launcher
   - DOMAIN-SUFFIX,nexon.com
   - DOMAIN-SUFFIX,nexon.net
