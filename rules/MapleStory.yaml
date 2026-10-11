@@ -6,3 +6,7 @@ payload:
   - PROCESS-NAME,Nexon Launcher
   - DOMAIN-SUFFIX,nexon.com
   - DOMAIN-SUFFIX,nexon.net
+  - DOMAIN-SUFFIX,nexon.io
+  - DOMAIN-SUFFIX,nexoncdn.co.kr
+  - DOMAIN,nxm-maplemgl-staticweb.s3.amazonaws.com
+  - DOMAIN-KEYWORD,mm-gl-login-
