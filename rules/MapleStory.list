@@ -9,3 +9,6 @@ DOMAIN-SUFFIX,nexon.io
 DOMAIN-SUFFIX,nexoncdn.co.kr
 DOMAIN,nxm-maplemgl-staticweb.s3.amazonaws.com
 DOMAIN-KEYWORD,mm-gl-login-
+# Observed MapleStory M UDP endpoint; AWS address may change
+DOMAIN,ec2-18-178-84-144.ap-northeast-1.compute.amazonaws.com
+IP-CIDR,18.178.84.144/32,no-resolve
