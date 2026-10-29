@@ -1,17 +1,36 @@
 # Source: https://code.claude.com/docs/en/corporate-proxy
 # Section: Network access requirements
+# Source: https://code.claude.com/docs/en/desktop
+# Section: Network access requirements
+DOMAIN-SUFFIX,anthropic.com
+DOMAIN-SUFFIX,claude.ai
+DOMAIN-SUFFIX,claude.app
+DOMAIN-SUFFIX,claude.com
+DOMAIN-SUFFIX,claudemcpcontent.com
+DOMAIN-SUFFIX,claudeusercontent.com
 DOMAIN-SUFFIX,frame.claudeusercontent.com
+DOMAIN-SUFFIX,livepreview.claude.ai
+DOMAIN-SUFFIX,livepreview.claude.app
+DOMAIN,a-api.anthropic.com
+DOMAIN,a-cdn.anthropic.com
+DOMAIN,anthropic.com
 DOMAIN,api.anthropic.com
+DOMAIN,assets-proxy.anthropic.com
+DOMAIN,assets.claude.ai
 DOMAIN,bridge.claudeusercontent.com
 DOMAIN,browser-intake-us5-datadoghq.com
 DOMAIN,claude.ai
+DOMAIN,claude.app
 DOMAIN,claude.com
 DOMAIN,code.claude.com
 DOMAIN,downloads.claude.ai
 DOMAIN,formulae.brew.sh
+DOMAIN,github.com
 DOMAIN,http-intake.logs.us5.datadoghq.com
 DOMAIN,mcp-proxy.anthropic.com
 DOMAIN,platform.claude.com
 DOMAIN,raw.githubusercontent.com
 DOMAIN,registry.npmjs.org
+DOMAIN,s-cdn.anthropic.com
+DOMAIN,sso.claude.com
 DOMAIN,storage.googleapis.com
