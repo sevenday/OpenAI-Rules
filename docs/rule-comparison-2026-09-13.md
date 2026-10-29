@@ -94,3 +94,26 @@ The scheduled workflow failed on 2026-10-27 and 2026-10-28 because the OpenAI so
 ### Validation status
 
 A regression test now covers parsing the Desktop page's code-block host lists, and a generated-output test checks that `claude.app` and `claude.dev` are present while shared `github.com` is not added to the Claude-specific rules. Final test status is determined by the pull request's GitHub Actions run; no local pass is claimed here.
+
+
+### Full network-dependency audit — 2026-10-29
+
+The official [Claude Code network requirements](https://code.claude.com/docs/en/corporate-proxy) and [Claude Desktop network requirements](https://code.claude.com/docs/en/desktop) were reviewed together.
+
+**First-party service coverage:** the generated suffix rules cover the documented Claude/Anthropic hosts for API, sign-in, SSO, downloads, MCP proxy, Desktop CDN, bridge, Artifacts and MCP Apps content. The Desktop-specific `claude.app` root is now included. `claude.dev` is a verified first-party developer blog but is related content, not a mandatory API endpoint.
+
+**Official shared dependencies — reachable when the feature requires them, but not automatically part of the Claude-specific rule set:**
+
+| Host(s) | Officially documented use | Routing decision |
+|---|---|---|
+| `github.com`, `raw.githubusercontent.com` | Plugin marketplace / plugin clones and release-note feed | Use the general GitHub rules to avoid pulling all GitHub traffic into the Claude group |
+| `registry.npmjs.org` | npm plugin packages, dependencies, npx MCP servers and npm/bun install flows | Use general npm rules; only needed for those install paths |
+| `storage.googleapis.com` | Plugin metadata and native installer/updater on older versions | Use general Google rules when the relevant flow needs it |
+| `formulae.brew.sh` | Homebrew version checks | Only for Homebrew installs |
+| `http-intake.logs.us5.datadoghq.com`, `browser-intake-us5-datadoghq.com` | Optional telemetry/error reporting | Not required for core sign-in/API; do not add solely for account-risk reasons |
+| `fonts.googleapis.com`, `fonts.gstatic.com` | Optional artifact fonts | Optional |
+| `cdnjs.cloudflare.com`, `cdn.jsdelivr.net`, `cdn.tailwindcss.com`, `code.jquery.com`, `unpkg.com` | Optional JavaScript libraries used by artifacts | Feature-dependent |
+
+The official docs describe these as network access / allowlist requirements for particular workflows. That does **not** mean every listed host must be forced through the Claude-specific proxy policy. If the network already reaches a shared dependency through the user's general GitHub/npm/Google rules, duplicating it here adds little value. Broad shared suffixes can also route unrelated traffic and should not be added without a clear need.
+
+**Account enforcement:** there is no evidence that adding a particular domain list prevents account suspension. Anthropic's terms make access subject to the Supported Regions Policy and other usage terms. Proxy rules can improve connectivity; they cannot make unsupported-region access or disallowed automation compliant, and they should not be represented as an anti-ban mechanism. See https://www.anthropic.com/legal/consumer-terms and https://www.anthropic.com/legal/supported-regions.
