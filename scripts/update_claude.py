@@ -113,7 +113,7 @@ def extract_desktop_network_requirements_from_html(html: str) -> list[str]:
             break
         if node.name != "pre":
             continue
-        for raw_line in node.get_text("\\n").splitlines():
+        for raw_line in node.get_text("\n").splitlines():
             candidate = raw_line.strip().strip("`").lower().rstrip(".")
             if not candidate:
                 continue
