@@ -113,11 +113,11 @@ Steam 版不默认加入 `steam.exe` 进程规则，避免把整个 Steam 商店
 
 ## Claude 默认规则的覆盖范围
 
-Anthropic 官方的 Claude Code 网络文档除了 Claude 自有域名，还列出一些共享基础设施，例如 `raw.githubusercontent.com`、`registry.npmjs.org`、`storage.googleapis.com`、Datadog 和 Homebrew。
+本仓库同时跟踪 Anthropic 官方的 [Claude Code 企业网络配置](https://code.claude.com/docs/en/corporate-proxy) 和 [Claude Desktop 网络访问要求](https://code.claude.com/docs/en/desktop)。Desktop 文档明确列出 `claude.app` 及其子域名、`*.claudeusercontent.com` 和 `*.claudemcpcontent.com`；Claude Code 文档还列出 `sso.claude.com`、GitHub、npm、Google Storage、Datadog 和 Homebrew 等依赖。
 
-这些共享域名并不只服务 Claude。为了避免把大量与 Claude 无关的 GitHub、npm、Google Storage 等流量也送进 Claude 策略组，本仓库：
+为避免把大量与 Claude 无关的 GitHub、npm、Google Storage 等流量也送进 Claude 策略组，本仓库：
 
-- 在 `data/claude/official.txt` 中保存官方表格里可移植的域名，便于审计和自动发现变化；
+- 在 `data/claude/official.txt` 中保存官方两份文档里可移植的域名，便于审计和自动发现变化；
 - 默认生成的 Claude 规则覆盖核心域名与经过筛选的专属兼容依赖；
 - 使用后缀规则覆盖同根子域名，对共享 CDN 只匹配具体租户主机：
 
@@ -125,17 +125,38 @@ Anthropic 官方的 Claude Code 网络文档除了 Claude 自有域名，还列�
 DOMAIN-SUFFIX,anthropic.com
 DOMAIN-SUFFIX,clau.de
 DOMAIN-SUFFIX,claude.ai
+DOMAIN-SUFFIX,claude.app
 DOMAIN-SUFFIX,claude.com
+DOMAIN-SUFFIX,claude.dev
 DOMAIN-SUFFIX,claudemcpclient.com
 DOMAIN-SUFFIX,claudemcpcontent.com
 DOMAIN-SUFFIX,claudeusercontent.com
 DOMAIN,servd-anthropic-website.b-cdn.net
 ```
 
-如果你的 Claude Code 插件、npm、GitHub 或 Google Storage 在本地网络也需要代理，建议由对应的 GitHub / Google / npm 通用规则处理，而不是把这些共享域名塞进 Claude 专属规则。
+`claude.app` 来自 Anthropic 官方 Desktop 网络要求；`claude.dev` 是 Claude 官方开发者博客，属于相关站点，但不是 Claude Code 必需的 API 端点。官方文档中的 `sso.claude.com` 已由 `claude.com` 后缀覆盖；`assets-proxy.anthropic.com` 已由 `anthropic.com` 后缀覆盖。
 
-`claudemcpclient.com` 和上述 CDN 主机属于人工筛选的社区兼容补充，不是从官方网络表自动提取的条目。来源与证据强度见[规则对比记录](docs/rule-comparison-2026-09-13.md)。
+GitHub、GitHub Raw、npm、Google Storage、Datadog 和 Homebrew 是官方文档列出的共享依赖，不默认塞进 Claude 专属规则，避免代理大量无关流量。它们通常应由通用 GitHub / Google / npm 规则处理。
 
+`claudemcpclient.com` 和精确的 Bunny CDN 租户主机属于人工筛选的社区兼容补充，不是官方网络表中的条目。来源与证据强度见[规则对比记录](docs/rule-comparison-2026-09-13.md)。
+
+### 网络依赖与账号风险说明
+
+官方文档中的“需要允许访问”不等于“所有域名都必须写入 Claude 专属代理规则”。当前核心规则已通过 Anthropic / Claude 域名后缀覆盖 API、登录、SSO、下载更新、MCP、Artifacts 和 Desktop CDN 等第一方主机。Claude Code 的插件市场与安装流程还可能访问共享服务：
+
+| 官方列出的主机 | 用途 | 建议 |
+|---|---|---|
+| `github.com`、`raw.githubusercontent.com` | 插件/Marketplace、release notes | 优先由通用 GitHub 规则处理 |
+| `registry.npmjs.org` | npm 插件及依赖安装 | 由通用 npm 规则处理；需要时再代理 |
+| `storage.googleapis.com` | 插件元数据、旧版原生安装器更新 | 由通用 Google 规则处理；按安装方式决定 |
+| `formulae.brew.sh` | Homebrew 安装的版本检查 | 仅 Homebrew 安装场景需要 |
+| `http-intake.logs.us5.datadoghq.com`、`browser-intake-us5-datadoghq.com` | 可选遥测/错误报告 | 不是核心连接所必需，不应为了“防封号”强行加入 |
+| `fonts.googleapis.com`、`fonts.gstatic.com` | Artifact 字体 | 可选；阻断后回退字体 |
+| `cdnjs.cloudflare.com`、`cdn.jsdelivr.net`、`cdn.tailwindcss.com`、`code.jquery.com`、`unpkg.com` | Artifact 使用的前端库 | 仅在相关 Artifact 需要时处理 |
+
+这些共享依赖应在需要时通过通用规则或按功能启用，不建议直接扩大为 `github.com`、`googleapis.com`、`cloudflare.com` 等大范围后缀并全部送进 Claude 专属策略组。官方文档也明确区分了必需主机、可选遥测和 Artifact 的可选第三方依赖。
+
+**账号风险边界：** 没有可信的域名列表可以保证避免封号。代理规则解决的是连接和分流问题，不会改变账号是否符合 Anthropic 的支持地区、使用条款和自动化使用要求。不要把社区收录的域名或固定出口 IP 当作规避封禁/地区限制的保证；请以 [Anthropic Consumer Terms](https://www.anthropic.com/legal/consumer-terms) 和 [Supported Regions Policy](https://www.anthropic.com/legal/supported-regions) 为准。
 ## OpenAI 规则策略
 
 OpenAI 部分继续以官方 `OpenAI/ChatGPT domains to allowlist` 为主，并保留少量经过筛选的历史兼容规则。官方列表的原始语义保存在 `data/official.txt`，兼容补充保存在 `data/supplemental.txt`。

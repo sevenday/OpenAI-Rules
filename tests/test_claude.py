@@ -31,6 +31,37 @@ def test_extract_network_requirements_from_table():
     ]
 
 
+def test_extract_desktop_network_requirements_from_code_blocks():
+    html = """
+    <html><body>
+      <h2>Network access requirements</h2>
+      <p>Allow Anthropic hosts.</p>
+      <pre><code>anthropic.com
+*.anthropic.com
+claude.app
+*.claude.app
+*.claudeusercontent.com
+*.claudemcpcontent.com</code></pre>
+      <pre><code>assets-proxy.anthropic.com
+sso.claude.com
+*.livepreview.claude.app</code></pre>
+      <h2>Authentication and SSO</h2>
+      <pre><code>must-not-be-included.example.com</code></pre>
+    </body></html>
+    """
+    assert update.extract_desktop_network_requirements_from_html(html) == [
+        "DOMAIN-SUFFIX,anthropic.com",
+        "DOMAIN-SUFFIX,claude.app",
+        "DOMAIN-SUFFIX,claudemcpcontent.com",
+        "DOMAIN-SUFFIX,claudeusercontent.com",
+        "DOMAIN-SUFFIX,livepreview.claude.app",
+        "DOMAIN,anthropic.com",
+        "DOMAIN,assets-proxy.anthropic.com",
+        "DOMAIN,claude.app",
+        "DOMAIN,sso.claude.com",
+    ]
+
+
 def test_extract_ignores_known_gerrit_pattern():
     html = """
     <h2>Network access requirements</h2>
@@ -135,12 +166,27 @@ def test_render_claude_official_snapshot_is_deterministic():
         """\
         # Source: https://code.claude.com/docs/en/corporate-proxy
         # Section: Network access requirements
+        # Source: https://code.claude.com/docs/en/desktop
+        # Section: Network access requirements
         DOMAIN-SUFFIX,frame.claudeusercontent.com
         DOMAIN,api.anthropic.com
         DOMAIN,raw.githubusercontent.com
         """
     )
     assert update.render_claude_official_snapshot(rules) == expected
+
+
+def test_generated_claude_rules_include_desktop_app_and_official_dev_blog():
+    repo_root = Path(__file__).parents[1]
+    official = update.load_rules(repo_root / "data" / "claude" / "official.txt")
+    update.validate_claude_official_rules(official)
+    contents = update.build_claude_update_contents(
+        repo_root, official, include_official=False
+    )
+    for rendered in contents.values():
+        assert "DOMAIN-SUFFIX,claude.app" in rendered
+        assert "DOMAIN-SUFFIX,claude.dev" in rendered
+        assert "DOMAIN,github.com" not in rendered
 
 
 def test_checked_in_claude_generated_files_match_sources():

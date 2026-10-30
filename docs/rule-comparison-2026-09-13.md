@@ -68,3 +68,52 @@ Claude 官方快照本次重新抓取成功，只修正 `bridge...` 与 `browser
 4. 将两条服务规则放在可能提前命中的通用规则之前；按客户端连接日志检查真正使用的出口。
 5. 后续排查保持同一节点、DNS 和客户端版本，分别对照登录、流式回复、上传下载、MCP 和语音。HTTP 403、DNS 能解析、TLS 能连接都不能单独证明完整服务可用。
 6. 自动更新继续只追踪官方文档并创建待审 PR。社区补充需要定期人工复核；本次未新增社区自动合并或任何定时任务。
+
+
+## Follow-up review — 2026-10-29
+
+### Official documentation changes
+
+Rechecked both [Claude Code enterprise network requirements](https://code.claude.com/docs/en/corporate-proxy) and [Claude Desktop network access requirements](https://code.claude.com/docs/en/desktop).
+
+- Added the Desktop page to the official-source updater. Its required-host lists include `claude.app` / `*.claude.app`, `*.claudeusercontent.com`, and `*.claudemcpcontent.com`. The generated output adds `DOMAIN-SUFFIX,claude.app`; the broader `anthropic.com`, `claudeusercontent.com`, and `claudemcpcontent.com` suffixes already cover the other listed Anthropic/CDN hosts.
+- The current Claude Code table includes `sso.claude.com` and `github.com`. The former is covered by the existing `claude.com` suffix. The latter is a shared service and remains in the official snapshot but out of the Claude-only output.
+- `claude.dev` was added to the curated output after verifying that the live site is the official Claude developer blog and links to `code.claude.com`. It is a related first-party site, not a claim that the blog is required for Claude API connectivity.
+- Optional artifact dependencies such as Google Fonts, cdnjs, jsDelivr, Tailwind CDN, jQuery CDN and unpkg remain excluded from the default Claude rule because they are shared third-party services. They can be handled by broader rules or added after observing a specific failed request.
+
+### Recent community candidates reviewed
+
+The [v2fly domain-list commit from 2026-10-21](https://github.com/v2fly/domain-list-community/commit/bdf45acfdeaec2644257bb8947e0a0294276d5ef) added `ant.dev`, `anthropic.team`, `antspace.dev`, `chatbotclaude.com`, `claude.app`, `claude.new`, `claude.site`, `claudeacademy.com`, `claudepages.dev`, and `claudestudio.com`; its [2026-10-02 change](https://github.com/v2fly/domain-list-community/commit/2c892a618f4e23c549d28edd0f3f75407521b1aa) added `claude.dev`. The Desktop docs independently confirm `claude.app`, and the live `claude.dev` site confirms the developer-blog use. The other candidates remain excluded because current first-party docs do not identify them as required network endpoints and the community list alone is not enough to establish that they should be routed by default.
+
+VPSDance's [2026-10-22](https://github.com/VPSDance/ai-proxy-rules/commit/e62c9982cbc3cb6b726d4ade20b7bfd754dfea67) and [2026-10-27](https://github.com/VPSDance/ai-proxy-rules/commit/ecc2c57b3eef1386b70f5b943aba504706969709) updates were also reviewed. The latest cleanup removes a malformed URL-like entry; it does not justify blindly importing every third-party or shared-service rule.
+
+### Automation reliability
+
+The scheduled workflow failed on 2026-10-27 and 2026-10-28 because the OpenAI source fetch returned HTTP 403 before the Claude updater could run. The workflow now attempts OpenAI and Claude updates independently, creates/updates a review PR when either source succeeds, and still marks the overall run failed if an official-source fetch fails. This preserves visibility into source failures without silently skipping Claude's check.
+
+### Validation status
+
+A regression test now covers parsing the Desktop page's code-block host lists, and a generated-output test checks that `claude.app` and `claude.dev` are present while shared `github.com` is not added to the Claude-specific rules. Final test status is determined by the pull request's GitHub Actions run; no local pass is claimed here.
+
+
+### Full network-dependency audit — 2026-10-29
+
+The official [Claude Code network requirements](https://code.claude.com/docs/en/corporate-proxy) and [Claude Desktop network requirements](https://code.claude.com/docs/en/desktop) were reviewed together.
+
+**First-party service coverage:** the generated suffix rules cover the documented Claude/Anthropic hosts for API, sign-in, SSO, downloads, MCP proxy, Desktop CDN, bridge, Artifacts and MCP Apps content. The Desktop-specific `claude.app` root is now included. `claude.dev` is a verified first-party developer blog but is related content, not a mandatory API endpoint.
+
+**Official shared dependencies — reachable when the feature requires them, but not automatically part of the Claude-specific rule set:**
+
+| Host(s) | Officially documented use | Routing decision |
+|---|---|---|
+| `github.com`, `raw.githubusercontent.com` | Plugin marketplace / plugin clones and release-note feed | Use the general GitHub rules to avoid pulling all GitHub traffic into the Claude group |
+| `registry.npmjs.org` | npm plugin packages, dependencies, npx MCP servers and npm/bun install flows | Use general npm rules; only needed for those install paths |
+| `storage.googleapis.com` | Plugin metadata and native installer/updater on older versions | Use general Google rules when the relevant flow needs it |
+| `formulae.brew.sh` | Homebrew version checks | Only for Homebrew installs |
+| `http-intake.logs.us5.datadoghq.com`, `browser-intake-us5-datadoghq.com` | Optional telemetry/error reporting | Not required for core sign-in/API; do not add solely for account-risk reasons |
+| `fonts.googleapis.com`, `fonts.gstatic.com` | Optional artifact fonts | Optional |
+| `cdnjs.cloudflare.com`, `cdn.jsdelivr.net`, `cdn.tailwindcss.com`, `code.jquery.com`, `unpkg.com` | Optional JavaScript libraries used by artifacts | Feature-dependent |
+
+The official docs describe these as network access / allowlist requirements for particular workflows. That does **not** mean every listed host must be forced through the Claude-specific proxy policy. If the network already reaches a shared dependency through the user's general GitHub/npm/Google rules, duplicating it here adds little value. Broad shared suffixes can also route unrelated traffic and should not be added without a clear need.
+
+**Account enforcement:** there is no evidence that adding a particular domain list prevents account suspension. Anthropic's terms make access subject to the Supported Regions Policy and other usage terms. Proxy rules can improve connectivity; they cannot make unsupported-region access or disallowed automation compliant, and they should not be represented as an anti-ban mechanism. See https://www.anthropic.com/legal/consumer-terms and https://www.anthropic.com/legal/supported-regions.

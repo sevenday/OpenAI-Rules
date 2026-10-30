@@ -32,32 +32,25 @@ DOMAIN-SUFFIX,sentry.io
 
 It also avoids broad shared third-party suffixes such as `algolia.net`, `identrust.com`, `launchdarkly.com`, `observeit.net` and `segment.io` unless there is a strong OpenAI-specific reason to include them.
 
-## 2. Anthropic / Claude primary source
+## 2. Anthropic / Claude primary sources
 
-Official Claude Code enterprise network guidance:
+Official Claude Code and Claude Desktop network guidance:
 
 - https://code.claude.com/docs/en/corporate-proxy
+- https://code.claude.com/docs/en/desktop
 
-The Claude updater parses the **Network access requirements** table and stores every portable `DOMAIN` / `DOMAIN-SUFFIX` entry in `data/claude/official.txt`.
+The Claude updater parses the **Network access requirements** table in the Claude Code page and the **Network access requirements** section in the Desktop page. It stores normalized portable `DOMAIN` / `DOMAIN-SUFFIX` entries from both sources in `data/claude/official.txt`. The Desktop page contains two host lists; both are parsed so the more specific host list and the wildcard form remain auditable. Known non-portable Gerrit patterns remain excluded.
 
-As of the initial Claude integration, that official table includes both Claude-owned hosts and shared third-party infrastructure, including examples such as:
+The current official sources include:
 
-- `api.anthropic.com`
-- `claude.ai`
-- `claude.com`
-- `platform.claude.com`
-- `mcp-proxy.anthropic.com`
-- `downloads.claude.ai`
-- `bridge.claudeusercontent.com`
-- `*.frame.claudeusercontent.com`
-- `raw.githubusercontent.com`
-- `registry.npmjs.org`
-- `storage.googleapis.com`
-- Datadog intake hosts
-- `formulae.brew.sh`
-- `code.claude.com`
+- `api.anthropic.com`, `platform.claude.com`, and `sso.claude.com`
+- `claude.ai`, `claude.com`, and `claude.app` / their documented subdomains
+- `assets-proxy.anthropic.com`, `a-api.anthropic.com`, `a-cdn.anthropic.com`, and `s-cdn.anthropic.com`
+- `bridge.claudeusercontent.com`, `*.frame.claudeusercontent.com`, and `*.claudemcpcontent.com`
+- `github.com`, `raw.githubusercontent.com`, `registry.npmjs.org`, and `storage.googleapis.com`
+- Datadog intake hosts, `formulae.brew.sh`, and `code.claude.com`
 
-The official table also contains the optional Gerrit pattern `*-review.googlesource.com`. That pattern is intentionally not converted into the maintained client rule files because it is not portable across the repository's minimal `DOMAIN` / `DOMAIN-SUFFIX` output model and only applies to a specific Gerrit checkout scenario.
+The official Desktop documentation says `assets-proxy.anthropic.com` is one of the hosts serving app code and user content. It is already covered by the broader `anthropic.com` suffix in the generated output. Likewise, `sso.claude.com` is covered by `claude.com`, and Claude Desktop's artifact/MCP content hosts are covered by `claudeusercontent.com` and `claudemcpcontent.com`.
 
 ### Claude default routing policy
 
@@ -67,21 +60,20 @@ The default generated Claude rule sets route core domain roots and narrowly scop
 DOMAIN-SUFFIX,anthropic.com
 DOMAIN-SUFFIX,clau.de
 DOMAIN-SUFFIX,claude.ai
+DOMAIN-SUFFIX,claude.app
 DOMAIN-SUFFIX,claude.com
+DOMAIN-SUFFIX,claude.dev
 DOMAIN-SUFFIX,claudemcpclient.com
 DOMAIN-SUFFIX,claudemcpcontent.com
 DOMAIN-SUFFIX,claudeusercontent.com
 DOMAIN,servd-anthropic-website.b-cdn.net
 ```
 
-`clau.de` is an official Claude short-link domain. `claudemcpcontent.com` is used by Claude-hosted MCP Apps content frames; see Anthropic's MCP Apps cross-compatibility documentation at https://claude.com/docs/connectors/building/mcp-apps/cross-compatibility. These are manually curated supplemental roots because they are useful for Claude routing even when they are not present in the Claude Code corporate-proxy table.
+`clau.de` is an official Claude short-link domain. `claude.app` is listed in Anthropic's current Desktop network requirements. `claude.dev` is the official Claude developer blog, included as a related first-party site rather than a claim that it is required for API connectivity. `claudemcpcontent.com` is used by Claude-hosted MCP Apps content frames; see Anthropic's MCP Apps cross-compatibility documentation at https://claude.com/docs/connectors/building/mcp-apps/cross-compatibility.
 
-`claudemcpclient.com` and the exact Bunny CDN tenant host are community compatibility entries reviewed on 2026-09-13, not claims of official allowlist status. v2fly, MetaCubeX and VPSDance include them; those repositories share upstream data and are not three independent runtime observations. See the pinned sources and limitations in the [comparison record](docs/rule-comparison-2026-09-13.md).
+`claudemcpclient.com` and the exact Bunny CDN tenant host are community compatibility entries reviewed on 2026-09-13, not claims of official allowlist status. The October 2026 v2fly list added several more Claude-named domains, but they are not included by default without stronger first-party documentation or specific traffic evidence. See the pinned sources and limitations in the [comparison record](docs/rule-comparison-2026-09-13.md).
 
-This keeps Claude routing narrow. Shared official dependencies such as GitHub Raw, npm, Google Storage, Datadog and Homebrew are preserved in the official snapshot for auditing and change detection, but are not added to the Claude-specific output by default because doing so could proxy substantial unrelated traffic.
-
-If a user's network requires those shared services to use a proxy, they should generally be handled by the user's broader GitHub / Google / npm rules. Narrow exceptions can also be added to `data/claude/supplemental.txt` after review.
-
+Shared official dependencies such as GitHub, GitHub Raw, npm, Google Storage, Datadog and Homebrew are preserved in the official snapshot for auditing and change detection, but are not added to the Claude-specific output by default because doing so could proxy substantial unrelated traffic. If a user's network requires those shared services to use a proxy, they should generally be handled by the broader GitHub / Google / npm rules. Narrow exceptions can also be added to `data/claude/supplemental.txt` after review.
 ## 3. Output minimization
 
 Official snapshots preserve normalized source semantics. Generated client files are allowed to remove redundant exact-host or narrower suffix rules when a broader `DOMAIN-SUFFIX` rule already covers them.

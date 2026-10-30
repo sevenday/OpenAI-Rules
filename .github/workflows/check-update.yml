@@ -30,15 +30,19 @@ jobs:
         run: pytest -q
 
       - name: Fetch OpenAI allowlist and regenerate rules
+        id: update_openai
         if: github.event_name != 'pull_request'
+        continue-on-error: true
         run: python scripts/update.py
 
       - name: Fetch Claude network requirements and regenerate rules
+        id: update_claude
         if: github.event_name != 'pull_request'
+        continue-on-error: true
         run: python scripts/update_claude.py
 
       - name: Create or update pull request
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && (steps.update_openai.outcome == 'success' || steps.update_claude.outcome == 'success')
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -52,6 +56,7 @@ jobs:
             Sources checked automatically:
             - https://help.openai.com/en/articles/9247338
             - https://code.claude.com/docs/en/corporate-proxy
+            - https://code.claude.com/docs/en/desktop
 
             Please review additions/removals before merging. The workflow never auto-merges this PR.
           add-paths: |
@@ -63,3 +68,9 @@ jobs:
             rules/Claude.list
             rules/Claude.yaml
             rules/Claude-Surge.list
+
+      - name: Report official-source update failures
+        if: always() && github.event_name != 'pull_request' && (steps.update_openai.outcome == 'failure' || steps.update_claude.outcome == 'failure')
+        run: |
+          echo "::error::One or more official-source update steps failed. See their logs; successful source changes may still have been submitted as a pull request."
+          exit 1

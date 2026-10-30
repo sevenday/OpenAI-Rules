@@ -12,7 +12,8 @@ import urllib.request
 from bs4 import BeautifulSoup
 
 CLAUDE_OFFICIAL_URL = "https://code.claude.com/docs/en/corporate-proxy"
-MIN_CLAUDE_OFFICIAL_RULES = 12
+CLAUDE_DESKTOP_URL = "https://code.claude.com/docs/en/desktop"
+MIN_CLAUDE_OFFICIAL_RULES = 20
 DOMAIN_RE = re.compile(r"^(?:\*\.)?(?:[a-z0-9-]+\.)+[a-z0-9-]+$", re.I)
 VALID_RULE_RE = re.compile(r"^(DOMAIN|DOMAIN-SUFFIX),((?:[a-z0-9-]+\.)+[a-z0-9-]+)$", re.I)
 IGNORED_OFFICIAL_PATTERNS = {"*-review.googlesource.com"}
@@ -27,6 +28,7 @@ REQUIRED_CORE_RULES = {
 CLAUDE_OWNED_ROOTS = (
     "anthropic.com",
     "claude.ai",
+    "claude.app",
     "claude.com",
     "claudeusercontent.com",
 )
@@ -82,6 +84,47 @@ def extract_network_requirements_from_html(html: str) -> list[str]:
     rules = sorted(set(found), key=rule_sort_key)
     if not rules:
         raise ValueError("network requirements table contained no domains")
+    return rules
+
+
+def extract_desktop_network_requirements_from_html(html: str) -> list[str]:
+    """Parse portable domain entries from Claude Desktop's official network section."""
+    soup = BeautifulSoup(html, "html.parser")
+    heading = next(
+        (
+            tag
+            for tag in soup.find_all(["h1", "h2", "h3", "h4"])
+            if "network access requirements" in tag.get_text(" ", strip=True).lower()
+        ),
+        None,
+    )
+    if heading is None:
+        raise ValueError("Claude Desktop network requirements heading not found")
+
+    found: list[str] = []
+    started = False
+    for node in soup.find_all(["h1", "h2", "h3", "h4", "pre"]):
+        if node is heading:
+            started = True
+            continue
+        if not started:
+            continue
+        if node.name in {"h1", "h2", "h3", "h4"}:
+            break
+        if node.name != "pre":
+            continue
+        for raw_line in node.get_text("\n").splitlines():
+            candidate = raw_line.strip().strip("`").lower().rstrip(".")
+            if not candidate:
+                continue
+            if "*" in candidate and not candidate.startswith("*."):
+                raise ValueError(f"unsupported Desktop domain pattern: {candidate}")
+            if DOMAIN_RE.fullmatch(candidate):
+                found.append(canonicalize_domain_entry(candidate))
+
+    rules = sorted(set(found), key=rule_sort_key)
+    if not rules:
+        raise ValueError("Claude Desktop network requirements section contained no domains")
     return rules
 
 
@@ -165,6 +208,8 @@ def render_claude_official_snapshot(rules: list[str]) -> str:
     header = (
         f"# Source: {CLAUDE_OFFICIAL_URL}\n"
         "# Section: Network access requirements\n"
+        f"# Source: {CLAUDE_DESKTOP_URL}\n"
+        "# Section: Network access requirements\n"
     )
     return header + "".join(
         f"{rule}\n" for rule in sorted(set(rules), key=rule_sort_key)
@@ -239,8 +284,15 @@ def prepare_live_update(repo_root: Path, official_rules: list[str]) -> dict[Path
 
 
 def update_from_live(repo_root: Path) -> list[Path]:
-    html = fetch_claude_official_html()
-    official_rules = extract_network_requirements_from_html(html)
+    corporate_html = fetch_claude_official_html(CLAUDE_OFFICIAL_URL)
+    desktop_html = fetch_claude_official_html(CLAUDE_DESKTOP_URL)
+    official_rules = sorted(
+        set(
+            extract_network_requirements_from_html(corporate_html)
+            + extract_desktop_network_requirements_from_html(desktop_html)
+        ),
+        key=rule_sort_key,
+    )
     contents = prepare_live_update(repo_root, official_rules)
     return apply_updates(contents)
 
