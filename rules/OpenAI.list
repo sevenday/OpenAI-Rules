@@ -22,6 +22,7 @@ DOMAIN,cdn.openaimerge.com
 DOMAIN,cdn.workos.com
 DOMAIN,challenges.cloudflare.com
 DOMAIN,forwarder.workos.com
+DOMAIN,frontend-apps-multi-region.workos.com
 DOMAIN,humb.apple.com
 DOMAIN,images.workoscdn.com
 DOMAIN,js.stripe.com
