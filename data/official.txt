@@ -12,11 +12,13 @@ DOMAIN-SUFFIX,openai.com
 DOMAIN,android.chat.openai.com
 DOMAIN,auth0.openai.com
 DOMAIN,cdn.openaimerge.com
+DOMAIN,cdn.platform.openai.com
 DOMAIN,cdn.workos.com
 DOMAIN,challenges.cloudflare.com
 DOMAIN,chat.openai.com
 DOMAIN,desktop.chat.openai.com
 DOMAIN,forwarder.workos.com
+DOMAIN,frontend-apps-multi-region.workos.com
 DOMAIN,humb.apple.com
 DOMAIN,images.workoscdn.com
 DOMAIN,ios.chat.openai.com

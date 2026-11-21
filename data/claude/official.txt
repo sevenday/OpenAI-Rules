@@ -13,6 +13,7 @@ DOMAIN-SUFFIX,livepreview.claude.ai
 DOMAIN-SUFFIX,livepreview.claude.app
 DOMAIN,a-api.anthropic.com
 DOMAIN,a-cdn.anthropic.com
+DOMAIN,a.claude.ai
 DOMAIN,anthropic.com
 DOMAIN,api.anthropic.com
 DOMAIN,assets-proxy.anthropic.com
